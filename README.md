@@ -2,8 +2,7 @@
 Custom redux middleware
 
 - [Reducing Boilerplate](#reducing-boilerplate)
-  - [Action before](#action-before)
-  - [Action after](#action-after)
+  - [Shorthand action](#shorthand-action)
   - [Generating Reducers](#generating-reducers)
 - [Applying Patterns](#applying-patterns)
   - [Repository](#repository-with-axios-interceptors)
@@ -14,7 +13,9 @@ Custom redux middleware
   - [npm run build:production](#npm-run-build:production)
   
 ## Reducing Boilerplate
-### Action before
+### Shorthand action
+
+#### Before
 ```js
 export const actGetListTodoSuccess = (todos) => ({
     type: Types.GET_LIST_TODO_SUCCESS,
@@ -27,7 +28,7 @@ export const actGetListTodoFailure = (error) => ({
 });
 
 export const actFetchingListTodo = () => ({
-    type: Types.GET_LIST_TODO,
+    type: Types.GET_LIST_TODO_REQUEST,
 });
 
 export const actGetListTodo = () => (dispatch) => {
@@ -41,7 +42,8 @@ export const actGetListTodo = () => (dispatch) => {
         });
 };
 ```
-### Action after
+
+#### After
 ```js
 export const actGetListTodo = () => (dispatch) => {
     dispatch({
@@ -55,9 +57,9 @@ export const actGetListTodo = () => (dispatch) => {
 };
 ```
 
-### Generating Reducers
-#### Object mapping from action types to handlers.
-##### Before
+## Generating Reducers
+### Object mapping from action types to handlers.
+#### Before
 ```js
 const homeReducer = (state = initialState, action) => {
     switch (action.type) {
@@ -86,7 +88,8 @@ const homeReducer = (state = initialState, action) => {
     }
 };
 ```
-##### After
+
+#### After
 ```js
 const homeReducer = createReducer(initialState, {
     [Types.GET_LIST_TODO]: (state, action) => {
@@ -115,14 +118,9 @@ const homeReducer = createReducer(initialState, {
 })
 ```
 
-
 ## Applying Patterns
 ### Repository with axios interceptors
 ```js
-import * as CONST from 'src/core/utils/constants';
-import axios from 'axios';
-import _ from 'lodash';
-
 export default class BaseRepository {
     constructor(uri) {
         this.uri = uri;
@@ -136,8 +134,7 @@ export default class BaseRepository {
             baseURL,
             headers: {
                 ...headers,
-            },
-            withCredentials: true
+            }
         });
     }
 
@@ -231,7 +228,7 @@ export default {
 
 ```
 
-Using at action
+> ##### Using
 ```js
 const HomeRepository = Repository.get(CONST.RepositoryName.HOME);
 ```
