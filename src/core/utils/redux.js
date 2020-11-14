@@ -2,10 +2,10 @@
  *
  * @param {Array} types is an array with 3 elements in the following order [BEGIN_REQUEST, SUCCESS, FAILURE]
  * @param {Function} callAPI is a promise function
- * @param {Object} callBack is an object with 2 props function: success(), failure()
+ * @param {Object} callBack is an object with 2 props function: success(response), failure(error)
  * callBack = {
- *  success: () => { },
- *  failure: () => { }
+ *  success: (response) => { },
+ *  failure: (error) => { }
  * }
  */
 export function callAPIMiddleware({ dispatch, getState }) {
@@ -37,7 +37,7 @@ export function callAPIMiddleware({ dispatch, getState }) {
         return callAPI()
             .then(response => {
                 if (callBack && typeof callBack === 'object' && callBack.success && typeof callBack.success === 'function') {
-                    callBack.success();
+                    callBack.success(response);
                 }
 
                 dispatch({
@@ -47,7 +47,7 @@ export function callAPIMiddleware({ dispatch, getState }) {
             }
             ).catch(error => {
                 if (callBack && typeof callBack === 'object' && callBack.failure && typeof callBack.failure === 'function') {
-                    callBack.failure();
+                    callBack.failure(error);
                 }
 
                 dispatch({
