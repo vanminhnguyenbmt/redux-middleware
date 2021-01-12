@@ -22,7 +22,7 @@ const homeReducer = createReducer(initialState, {
             todos: action.payload,
             error: null,
             isLoading: false,
-        };   
+        };
     },
     [Types.GET_LIST_TODO_FAILURE]: (state, action) => {
         return {

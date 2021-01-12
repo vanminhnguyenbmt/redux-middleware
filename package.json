@@ -1,5 +1,5 @@
 {
-  "name": "247bpo-frontend",
+  "name": "redux-custom-middleware",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

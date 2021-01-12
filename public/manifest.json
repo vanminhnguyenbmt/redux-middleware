@@ -1,6 +1,6 @@
 {
-  "short_name": "247bpo",
-  "name": "247bpo-frontend",
+  "short_name": "custom-middleware",
+  "name": "redux-custom-middleware",
   "icons": [
     {
       "src": "favicon.ico",
