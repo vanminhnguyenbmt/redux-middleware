@@ -3,9 +3,10 @@
  * @param {Array} types is an array with 3 elements in the following order [BEGIN_REQUEST, SUCCESS, FAILURE]
  * @param {Function} callAPI is a promise function
  * @param {Object} callBack is an object with 2 props function: success(response), failure(error)
+ * @example
  * callBack = {
- *  success: (response) => { },
- *  failure: (error) => { }
+ *  success: (response) => { //todo },
+ *  failure: (error) => { //todo }
  * }
  */
 export function callAPIMiddleware({ dispatch, getState }) {
@@ -62,10 +63,11 @@ export function callAPIMiddleware({ dispatch, getState }) {
  *
  * @param {Object} initialState
  * @param {Object} handlers
+ * @example
  * {
  *   [ActionTypes.ADD_TODO]: (state, action) => {
- *       const text = action.text.trim()
- *       return [...state, text]
+ *       const data = action.payload.data
+ *       return {...state, data}
  *   }
  * }
  *

@@ -24,7 +24,7 @@ export default class BaseRepository {
     }
 
     handleError = (error) => {
-        console.log('axios error:', error);
+        console.error('axios error:', error);
         switch (error.response.status) {
             case CONST.HttpStatus.UNAUTHORIZED:
                 break;
