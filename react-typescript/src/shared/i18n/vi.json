@@ -1,0 +1,20 @@
+{
+    "MESSAGE.ERR_0001": "{_0} không được bỏ trống",
+    "MESSAGE.ERR_0002": "{_0} phải là ngày sau {_1}.",
+    "MESSAGE.ERR_0003": "{_0} phải là ngày trước {_1}.",
+    "MESSAGE.ERR_0004": "{_0} chỉ được phép chứa số và chữ.",
+    "MESSAGE.ERR_0005": "{_0} phải lớn hơn {_1} và nhỏ hơn hoặc bằng {_2}.",
+    "MESSAGE.ERR_0006": "{_0} là thời gian không hợp lệ.",
+    "MESSAGE.ERR_0007": "{_0} không đúng định dạng {_1}.",
+    "MESSAGE.ERR_0008": "{_0} phải là số tự nhiên.",
+    "MESSAGE.ERR_0009": "{_0} không được lớn hơn {_1}.",
+    "MESSAGE.ERR_0010": "{_0} tối thiểu phải bằng {_1}.",
+    "MESSAGE.ERR_0011": "{_0} không được nhiều hơn {_1} kí tự.",
+    "MESSAGE.ERR_0012": "{_0} tối thiểu phải có {_1} kí tự.",
+    "MESSAGE.ERR_0013": "{_0} tập tin phải có định dạng {_1}.",
+    "MESSAGE.ERR_0014": "{_0} phải là số.",
+    "MESSAGE.ERR_0015": "Thông tin yêu cầu không hợp lệ, vui lòng thử lại",
+    "MESSAGE.ERR_0016": "{_0} không hợp lệ",
+
+    "HOME.TITLE": "Ví dụ về Redux {_0}"
+}

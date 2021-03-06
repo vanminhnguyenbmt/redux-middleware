@@ -1,0 +1,10 @@
+.home {
+    text-align: center;
+    &.test {
+        color: gray;
+    }
+
+    .d-in-block {
+        display: inline-block;
+    }
+}

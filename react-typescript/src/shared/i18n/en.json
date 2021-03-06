@@ -1,0 +1,20 @@
+{
+    "MESSAGE.ERR_0001": "{_0} is required.",
+    "MESSAGE.ERR_0002": "{_0} must be a date after {_1}.",
+    "MESSAGE.ERR_0003": "{_0} must be a date before {_1}.",
+    "MESSAGE.ERR_0004": "{_0} only contain letters and numbers.",
+    "MESSAGE.ERR_0005": "{_0} must be greater than {_1} and less than or equal to {_2}.",
+    "MESSAGE.ERR_0006": "{_0} is not a valid date.",
+    "MESSAGE.ERR_0007": "{_0} does not match the format {_1}.",
+    "MESSAGE.ERR_0008": "{_0} must be an integer.",
+    "MESSAGE.ERR_0009": "{_0} must not be greater than {_1}.",
+    "MESSAGE.ERR_0010": "{_0} must be at least equal {_1}.",
+    "MESSAGE.ERR_0011": "{_0} must not be greater than {_1} character(s).",
+    "MESSAGE.ERR_0012": "{_0} must be at least {_1} character(s).",
+    "MESSAGE.ERR_0013": "{_0} must be a file of type {_1}.",
+    "MESSAGE.ERR_0014": "{_0} must be a number.",
+    "MESSAGE.ERR_0015": "Requested information is invalid, please try again.",
+    "MESSAGE.ERR_0016": "{_0} is invalid",
+
+    "HOME.TITLE": "Redux Example {_0}"
+}
