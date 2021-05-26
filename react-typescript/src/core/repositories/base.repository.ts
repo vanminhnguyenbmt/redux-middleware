@@ -1,14 +1,21 @@
 import * as CONST from 'src/core/utils/constants';
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosPromise, AxiosRequestConfig, AxiosResponse } from 'axios';
 import _ from 'lodash';
+import qs from 'qs';
 
-export default class BaseRepository<T = any> {
+export default class BaseRepository {
     uri: string;
     repository: AxiosInstance;
 
     constructor(uri: string) {
         this.uri = uri;
         this.repository = this.axiosClient();
+        this.repository.interceptors.request.use((config: AxiosRequestConfig): AxiosRequestConfig => {
+            const yourToken = 'your_token';
+            config.headers['Authorization'] = `Bearer ${yourToken}`;
+
+            return config;
+        });
         this.repository.interceptors.response.use(this.handleSuccess, this.handleError);
     }
 
@@ -49,51 +56,64 @@ export default class BaseRepository<T = any> {
         return null;
     }
 
-    getById(id: number): Promise<AxiosResponse<T>> {
+    getById<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
+        if (!_.isNumber(id)) return Promise.reject('Id is not a number');
+        return this.repository.get(`${uri || this.uri} /${id}`);
+    }
+
+    getOne<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.get(`${this.uri}/${id}`);
+        return this.repository.get(`${uri || this.uri}?id=${id}`);
     }
 
-    getOne(id: number): Promise<AxiosResponse<T>> {
-        if (!_.isNumber(id)) return Promise.reject('Id is not a number');
-
-        return this.repository.get(`${this.uri}?id=${id}`);
+    getAll<T>(uri?: string): Promise<AxiosResponse<T>> {
+        return this.repository.get(`${uri || this.uri}`);
     }
 
-    getAll(): Promise<AxiosResponse<T>> {
-        return this.repository.get(`${this.uri}`);
+    /**
+    * @param {object} is a object query
+    * @example {a: 1, b: '2', c: 'string'}
+    * ⟹ a=1&b=2&c=string
+    */
+    query<T>(object: Record<string, any>, uri?: string): Promise<AxiosResponse<T>> {
+        const invalidMessage = this._invalidObject(object);
+        if (invalidMessage) return Promise.reject(invalidMessage);
+
+        return this.repository.get(`${uri || this.uri}?${qs.stringify(object)}`);
     }
 
-    pagination({ pageIndex = 1, limit = 10 }: { pageIndex: number, limit: number }): Promise<AxiosResponse<T>> {
-        const offset = (pageIndex - 1) * limit;
-
-        return this.repository.get(`${this.uri}?limit=${limit}&offset=${offset}`);
+    pagination<T>({ pageIndex = 0, limit = 10, sortBy = 'createdTime', sortType = 'DESC' }: { pageIndex: number, limit: number, sortBy?: string, sortType?: string }, uri?: string): Promise<AxiosResponse<T>> {
+        return this.repository.get(`${uri || this.uri}?itemsPerPage=${limit}&pageId=${pageIndex}&sortBy=${sortBy}&sortType=${sortType}`);
     }
 
-    search(searchText: string | number): Promise<AxiosResponse<T>> {
+    search<T>(searchText: string | number, uri?: string): Promise<AxiosResponse<T>> {
         if (_.isNil(searchText)) return Promise.reject('SearchText is empty');
 
-        return this.repository.get(`${this.uri}?search=${searchText}`);
+        return this.repository.get(`${uri || this.uri}?search=${searchText}`);
     }
 
-    create(payload = {}): Promise<AxiosResponse<T>> {
+    create<T>(payload = {}, uri?: string): Promise<AxiosResponse<T>> {
         const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.post(`${this.uri}`, payload);
+        return this.repository.post(`${uri || this.uri}`, payload);
     }
 
-    update(payload = {}): Promise<AxiosResponse<T>> {
+    update<T>(payload = {}, uri?: string): Promise<AxiosResponse<T>> {
         const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.put(`${this.uri}`, payload);
+        return this.repository.put(`${uri || this.uri}`, payload);
     }
 
-    delete(id: number): Promise<AxiosResponse<T>> {
+    delete<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.delete(`${this.uri}/${id}`)
+        return this.repository.delete(`${uri || this.uri}/${id}`)
+    }
+
+    customConfig<T>(config: AxiosRequestConfig): AxiosPromise<T> {
+        return axios(config);
     }
 }

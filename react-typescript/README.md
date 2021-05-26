@@ -8,9 +8,10 @@ Custom redux middleware
   - [Repository](#repository-with-axios-interceptors)
   - [Factory](#factory-to-initialize-instance-of-repository)
 - [Available Scripts](#available-scripts)
-  - [npm run start:dev](#npm-run-start:dev)
-  - [npm run build:dev](#npm-run-build:dev)
-  - [npm run build:production](#npm-run-build:production)
+  - [yarn install](#yarn-install)
+  - [yarn start:dev](#yarn-start:dev)
+  - [yarn build:dev](#yarn-build:dev)
+  - [yarn build:production](#yarn-build:production)
   
 ## Reducing Boilerplate
 ### Shorthand action
@@ -237,13 +238,16 @@ const HomeRepository = Repository.get(CONST.RepositoryName.HOME);
 
 In the project directory, you can run:
 
-### `npm run start:dev`
+### `yarn-install`
+Install all dependencies
+
+### `yarn start:dev`
 
 Runs the app in the development mode.<br>
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-### `npm run build:dev`
-### `npm run build:production`
+### `yarn build:dev`
+### `yarn build:production`
 
 Builds the app for production to the `build` folder.<br>
 It correctly bundles React in production mode and optimizes the build for the best performance.
