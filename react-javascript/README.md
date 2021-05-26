@@ -8,9 +8,10 @@ Custom redux middleware
   - [Repository](#repository-with-axios-interceptors)
   - [Factory](#factory-to-initialize-instance-of-repository)
 - [Available Scripts](#available-scripts)
-  - [npm run start:dev](#npm-run-start:dev)
-  - [npm run build:dev](#npm-run-build:dev)
-  - [npm run build:production](#npm-run-build:production)
+  - [yarn install](#yarn-install)
+  - [yarn start:dev](#yarn-start:dev)
+  - [yarn build:dev](#yarn-build:dev)
+  - [yarn build:production](#yarn-build:production)
   
 ## Reducing Boilerplate
 ### Shorthand action
@@ -125,6 +126,12 @@ export default class BaseRepository {
     constructor(uri) {
         this.uri = uri;
         this.repository = this.axiosClient();
+        this.repository.interceptors.request.use(config => {
+            const yourToken = 'your_token';
+            config.headers['Authorization'] = `Bearer ${yourToken}`;
+
+            return config;
+        });
         this.repository.interceptors.response.use(this.handleSuccess, this.handleError)
     }
 
@@ -143,7 +150,7 @@ export default class BaseRepository {
     }
 
     handleError = (error) => {
-        console.log('axios error:', error);
+        console.error('axios error:', error);
         switch (error.response.status) {
             case CONST.HttpStatus.UNAUTHORIZED:
                 break;
@@ -164,52 +171,52 @@ export default class BaseRepository {
         return null;
     }
 
-    getById(id) {
+    getById(id, uri) {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.get(`${this.uri}/${id}`);
+        return this.repository.get(`${uri || this.uri}/${id}`);
     }
 
-    getOne(id) {
+    getOne(id, uri) {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.get(`${this.uri}?id=${id}`);
+        return this.repository.get(`${uri || this.uri}?id=${id}`);
     }
 
-    getAll() {
-        return this.repository.get(`${this.uri}`);
+    getAll(uri) {
+        return this.repository.get(`${uri || this.uri}`);
     }
 
-    pagination({ pageIndex = 1, limit = 10 }) {
+    pagination({ pageIndex = 1, limit = 10 }, uri) {
         let offset = (pageIndex - 1) * limit;
 
-        return this.repository.get(`${this.uri}?limit=${limit}&offset=${offset}`);
+        return this.repository.get(`${uri || this.uri}?limit=${limit}&offset=${offset}`);
     }
 
-    search(searchText) {
+    search(searchText, uri) {
         if (_.isNil(searchText)) return Promise.reject('SearchText is empty');
 
-        return this.repository.get(`${this.uri}?search=${searchText}`);
+        return this.repository.get(`${uri || this.uri}?search=${searchText}`);
     }
 
-    create(payload = {}) {
+    create(payload = {}, uri) {
         let invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.post(`${this.uri}`, payload);
+        return this.repository.post(`${uri || this.uri}`, payload);
     }
 
-    update(payload = {}) {
+    update(payload = {}, uri) {
         let invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.put(`${this.uri}`, payload);
+        return this.repository.put(`${uri || this.uri}`, payload);
     }
 
-    delete(id) {
+    delete(id, uri) {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.delete(`${this.uri}/${id}`)
+        return this.repository.delete(`${uri || this.uri}/${id}`)
     }
 }
 ```
@@ -237,13 +244,16 @@ const HomeRepository = Repository.get(CONST.RepositoryName.HOME);
 
 In the project directory, you can run:
 
-### `npm run start:dev`
+### `yarn install`
+Install all dependencies
+
+### `yarn start:dev`
 
 Runs the app in the development mode.<br>
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-### `npm run build:dev`
-### `npm run build:production`
+### `yarn build:dev`
+### `yarn build:production`
 
 Builds the app for production to the `build` folder.<br>
 It correctly bundles React in production mode and optimizes the build for the best performance.

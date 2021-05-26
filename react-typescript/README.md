@@ -123,13 +123,22 @@ const homeReducer = createReducer(initialState, {
 ### Repository with axios interceptors
 ```js
 export default class BaseRepository {
-    constructor(uri) {
+    uri: string;
+    repository: AxiosInstance;
+
+    constructor(uri: string) {
         this.uri = uri;
         this.repository = this.axiosClient();
-        this.repository.interceptors.response.use(this.handleSuccess, this.handleError)
+        this.repository.interceptors.request.use((config: AxiosRequestConfig): AxiosRequestConfig => {
+            const yourToken = 'your_token';
+            config.headers['Authorization'] = `Bearer ${yourToken}`;
+
+            return config;
+        });
+        this.repository.interceptors.response.use(this.handleSuccess, this.handleError);
     }
 
-    axiosClient(headers = {}) {
+    axiosClient(headers = {}): AxiosInstance {
         const baseURL = process.env.REACT_APP_BASE_URL;
         return axios.create({
             baseURL,
@@ -139,13 +148,13 @@ export default class BaseRepository {
         });
     }
 
-    handleSuccess(response) {
+    handleSuccess(response: AxiosResponse): AxiosResponse {
         return response;
     }
 
-    handleError = (error) => {
-        console.log('axios error:', error);
-        switch (error.response.status) {
+    handleError = (error: AxiosError): any => {
+        console.error('axios error:', error);
+        switch (error?.response?.status) {
             case CONST.HttpStatus.UNAUTHORIZED:
                 break;
             case CONST.HttpStatus.NOT_FOUND:
@@ -153,10 +162,11 @@ export default class BaseRepository {
             default:
                 break;
         }
-        return Promise.reject(error)
+
+        return Promise.reject(error);
     }
 
-    _invalidObject(payload) {
+    _invalidObject(payload = {}): string | null {
         if (!_.isObject(payload)) return 'Payload is invalid';
         if ((payload instanceof FormData) && (_.isNil(payload) || payload.entries().next().done)) {
             return 'Payload is Empty';
@@ -165,80 +175,89 @@ export default class BaseRepository {
         return null;
     }
 
-    getById(id) {
+    getById<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
+        if (!_.isNumber(id)) return Promise.reject('Id is not a number');
+        return this.repository.get(`${uri || this.uri} /${id}`);
+    }
+
+    getOne<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.get(`${this.uri}/${id}`);
+        return this.repository.get(`${uri || this.uri}?id=${id}`);
     }
 
-    getOne(id) {
-        if (!_.isNumber(id)) return Promise.reject('Id is not a number');
-
-        return this.repository.get(`${this.uri}?id=${id}`);
+    getAll<T>(uri?: string): Promise<AxiosResponse<T>> {
+        return this.repository.get(`${uri || this.uri}`);
     }
 
-    getAll() {
-        return this.repository.get(`${this.uri}`);
+    /**
+    * @param {object} is a object query
+    * @example {a: 1, b: '2', c: 'string'}
+    * ⟹ a=1&b=2&c=string
+    */
+    query<T>(object: Record<string, any>, uri?: string): Promise<AxiosResponse<T>> {
+        const invalidMessage = this._invalidObject(object);
+        if (invalidMessage) return Promise.reject(invalidMessage);
+
+        return this.repository.get(`${uri || this.uri}?${qs.stringify(object)}`);
     }
 
-    pagination({ pageIndex = 1, limit = 10 }) {
-        let offset = (pageIndex - 1) * limit;
-
-        return this.repository.get(`${this.uri}?limit=${limit}&offset=${offset}`);
+    pagination<T>({ pageIndex = 0, limit = 10, sortBy = 'createdTime', sortType = 'DESC' }: { pageIndex: number, limit: number, sortBy?: string, sortType?: string }, uri?: string): Promise<AxiosResponse<T>> {
+        return this.repository.get(`${uri || this.uri}?itemsPerPage=${limit}&pageId=${pageIndex}&sortBy=${sortBy}&sortType=${sortType}`);
     }
 
-    search(searchText) {
+    search<T>(searchText: string | number, uri?: string): Promise<AxiosResponse<T>> {
         if (_.isNil(searchText)) return Promise.reject('SearchText is empty');
 
-        return this.repository.get(`${this.uri}?search=${searchText}`);
+        return this.repository.get(`${uri || this.uri}?search=${searchText}`);
     }
 
-    create(payload = {}) {
-        let invalidMessage = this._invalidObject(payload);
+    create<T>(payload = {}, uri?: string): Promise<AxiosResponse<T>> {
+        const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.post(`${this.uri}`, payload);
+        return this.repository.post(`${uri || this.uri}`, payload);
     }
 
-    update(payload = {}) {
-        let invalidMessage = this._invalidObject(payload);
+    update<T>(payload = {}, uri?: string): Promise<AxiosResponse<T>> {
+        const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.put(`${this.uri}`, payload);
+        return this.repository.put(`${uri || this.uri}`, payload);
     }
 
-    delete(id) {
+    delete<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.delete(`${this.uri}/${id}`)
+        return this.repository.delete(`${uri || this.uri}/${id}`)
+    }
+
+    customConfig<T>(config: AxiosRequestConfig): AxiosPromise<T> {
+        return axios(config);
     }
 }
 ```
 ### Factory to initialize instance of repository
 ```js
-import * as CONST from 'src/core/utils/constants';
-import HomeRepository from 'src/core/repositories/Home.repository';
-
-const repositories = {
-    [CONST.RepositoryName.HOME]: new HomeRepository()
+const repositories: { [key: string]: any } = {
+    [CONST.RepositoryName.TODO]: new TodoRepository()
 };
 
 export default {
-    get: (name) => repositories[name]
+    get: (name: string): any => repositories[name]
 };
-
 ```
 
 > ##### Using
 ```js
-const HomeRepository = Repository.get(CONST.RepositoryName.HOME);
+const todoRepository = Repository.get(CONST.RepositoryName.TODO) as TodoRepository;
 ```
 
 ## Available Scripts
 
 In the project directory, you can run:
 
-### `yarn-install`
+### `yarn install`
 Install all dependencies
 
 ### `yarn start:dev`
