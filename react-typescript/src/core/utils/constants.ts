@@ -16,10 +16,6 @@ export const AppURI = {
     HOME: '/home'
 };
 
-export const RepositoryName = {
-    TODO: 'todoRepository'
-};
-
 export const HttpStatus = {
     OK: 200,
     CREATED: 201,
@@ -38,5 +34,4 @@ export const HttpStatus = {
 
 Object.freeze(ApiURI);
 Object.freeze(AppURI);
-Object.freeze(RepositoryName);
 Object.freeze(HttpStatus);
