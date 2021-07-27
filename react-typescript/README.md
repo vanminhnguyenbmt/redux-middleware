@@ -239,18 +239,26 @@ export default class BaseRepository {
 ```
 ### Factory to initialize instance of repository
 ```js
-const repositories: { [key: string]: any } = {
-    [CONST.RepositoryName.TODO]: new TodoRepository()
-};
+export enum RepositoryName {
+    TODO = 'todoRepository'
+}
 
-export default {
-    get: (name: string): any => repositories[name]
+type RepositoryValue = {
+    [RepositoryName.TODO]: TodoRepository
+}
+
+type RepositoryType = {
+    [key in RepositoryName]: RepositoryValue[key];
+}
+
+const Repositories: RepositoryType = {
+    [RepositoryName.TODO]: new TodoRepository()
 };
 ```
 
 > ##### Using
 ```js
-const todoRepository = Repository.get(CONST.RepositoryName.TODO) as TodoRepository;
+const todoRepository = Repositories[RepositoryName.TODO];
 ```
 
 ## Available Scripts
