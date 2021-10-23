@@ -5,4 +5,8 @@ export default class HomeRepository extends BaseRepository {
     constructor() {
         super(CONST.ApiURI.TODO);
     }
+
+    getAllCustom() {
+        return this.setUri(CONST.ApiURI.TODO).getAll();
+    }
 }

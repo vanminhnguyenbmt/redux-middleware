@@ -34,7 +34,7 @@ export const actFetchingListTodo = () => ({
 
 export const actGetListTodo = () => (dispatch) => {
     dispatch(actFetchingListTodo());
-    return HomeRepository.getAll()
+    return todoRepository.getAll()
         .then((res) => {
             dispatch(actGetListTodoSuccess(res.data));
         })
@@ -49,7 +49,7 @@ export const actGetListTodo = () => (dispatch) => {
 export const actGetListTodo = () => (dispatch) => {
     dispatch({
         types: [Types.GET_LIST_TODO_REQUEST, Types.GET_LIST_TODO_SUCCESS, Types.GET_LIST_TODO_FAILURE],
-        callAPI: () => HomeRepository.getAll(),
+        callAPI: () => todoRepository.getAll(),
         callBack: {
             success: response => {console.log('callAPI success', response)},
             failure: error => {console.log('callAPI failure', error)}
@@ -166,6 +166,11 @@ export default class BaseRepository {
         return Promise.reject(error);
     }
 
+    setUri(uri: string): BaseRepository {
+        this.uri = uri;
+        return this;
+    }
+
     _invalidObject(payload = {}): string | null {
         if (!_.isObject(payload)) return 'Payload is invalid';
         if ((payload instanceof FormData) && (_.isNil(payload) || payload.entries().next().done)) {
@@ -175,19 +180,19 @@ export default class BaseRepository {
         return null;
     }
 
-    getById<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
+    getById<T>(id: number): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
-        return this.repository.get(`${uri || this.uri} /${id}`);
+        return this.repository.get(`${this.uri}/${id}`);
     }
 
-    getOne<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
+    getOne<T>(id: number): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.get(`${uri || this.uri}?id=${id}`);
+        return this.repository.get(`${this.uri}?id=${id}`);
     }
 
-    getAll<T>(uri?: string): Promise<AxiosResponse<T>> {
-        return this.repository.get(`${uri || this.uri}`);
+    getAll<T>(): Promise<AxiosResponse<T>> {
+        return this.repository.get(this.uri);
     }
 
     /**
@@ -195,45 +200,58 @@ export default class BaseRepository {
     * @example {a: 1, b: '2', c: 'string'}
     * ⟹ a=1&b=2&c=string
     */
-    query<T>(object: Record<string, any>, uri?: string): Promise<AxiosResponse<T>> {
+    query<T>(object: Record<string, any>): Promise<AxiosResponse<T>> {
         const invalidMessage = this._invalidObject(object);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.get(`${uri || this.uri}?${qs.stringify(object)}`);
+        return this.repository.get(`${this.uri}?${qs.stringify(object)}`);
     }
 
-    pagination<T>({ pageIndex = 0, limit = 10, sortBy = 'createdTime', sortType = 'DESC' }: { pageIndex: number, limit: number, sortBy?: string, sortType?: string }, uri?: string): Promise<AxiosResponse<T>> {
-        return this.repository.get(`${uri || this.uri}?itemsPerPage=${limit}&pageId=${pageIndex}&sortBy=${sortBy}&sortType=${sortType}`);
+    pagination<T>({ pageIndex = 0, limit = 10, sortBy = 'createdTime', sortType = 'DESC' }: { pageIndex: number, limit: number, sortBy?: string, sortType?: string }): Promise<AxiosResponse<T>> {
+        return this.repository.get(`${this.uri}?itemsPerPage=${limit}&pageId=${pageIndex}&sortBy=${sortBy}&sortType=${sortType}`);
     }
 
-    search<T>(searchText: string | number, uri?: string): Promise<AxiosResponse<T>> {
+    search<T>(searchText: string | number): Promise<AxiosResponse<T>> {
         if (_.isNil(searchText)) return Promise.reject('SearchText is empty');
 
-        return this.repository.get(`${uri || this.uri}?search=${searchText}`);
+        return this.repository.get(`${this.uri}?search=${searchText}`);
     }
 
-    create<T>(payload = {}, uri?: string): Promise<AxiosResponse<T>> {
+    create<T>(payload = {}): Promise<AxiosResponse<T>> {
         const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.post(`${uri || this.uri}`, payload);
+        return this.repository.post(this.uri, payload);
     }
 
-    update<T>(payload = {}, uri?: string): Promise<AxiosResponse<T>> {
+    update<T>(payload = {}): Promise<AxiosResponse<T>> {
         const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.put(`${uri || this.uri}`, payload);
+        return this.repository.put(this.uri, payload);
     }
 
-    delete<T>(id: number, uri?: string): Promise<AxiosResponse<T>> {
+    delete<T>(id: number): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
-        return this.repository.delete(`${uri || this.uri}/${id}`)
+        return this.repository.delete(`${this.uri}/${id}`)
     }
 
     customConfig<T>(config: AxiosRequestConfig): AxiosPromise<T> {
         return axios(config);
+    }
+}
+```
+
+### TodoRepository
+```js
+export default class TodoRepository extends BaseRepository {
+    constructor() {
+        super(CONST.ApiURI.TODO);
+    }
+
+    getAllCustom(): Promise<AxiosResponse<Todo>> {
+        return this.setUri(CONST.ApiURI.TODO).getAll<Todo>();
     }
 }
 ```

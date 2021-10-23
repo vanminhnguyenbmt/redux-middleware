@@ -220,6 +220,18 @@ export default class BaseRepository {
     }
 }
 ```
+### HomeRepository
+```js
+export default class HomeRepository extends BaseRepository {
+    constructor() {
+        super(CONST.ApiURI.TODO);
+    }
+
+    getAllCustom() {
+        return this.setUri(CONST.ApiURI.TODO).getAll();
+    }
+}
+```
 ### Factory to initialize instance of repository
 ```js
 import * as CONST from 'src/core/utils/constants';

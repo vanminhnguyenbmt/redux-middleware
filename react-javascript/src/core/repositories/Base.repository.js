@@ -42,6 +42,11 @@ export default class BaseRepository {
         return Promise.reject(error)
     }
 
+    setUri(uri) {
+        this.uri = uri;
+        return this;
+    }
+
     _invalidObject(payload) {
         if (!_.isObject(payload)) return 'Payload is invalid';
         if ((payload instanceof FormData) && (_.isNil(payload) || payload.entries().next().done)) {

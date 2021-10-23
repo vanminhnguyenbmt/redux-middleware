@@ -8,9 +8,10 @@ Custom redux middleware
   - [Repository](#repository-with-axios-interceptors)
   - [Factory](#factory-to-initialize-instance-of-repository)
 - [Available Scripts](#available-scripts)
-  - [npm run start:dev](#npm-run-start:dev)
-  - [npm run build:dev](#npm-run-build:dev)
-  - [npm run build:production](#npm-run-build:production)
+  - [yarn install](#yarn-install)
+  - [yarn start:dev](#yarn-start:dev)
+  - [yarn build:dev](#yarn-build:dev)
+  - [yarn build:production](#yarn-build:production)
   
 ## Reducing Boilerplate
 ### Shorthand action
@@ -33,7 +34,7 @@ export const actFetchingListTodo = () => ({
 
 export const actGetListTodo = () => (dispatch) => {
     dispatch(actFetchingListTodo());
-    return HomeRepository.getAll()
+    return todoRepository.getAll()
         .then((res) => {
             dispatch(actGetListTodoSuccess(res.data));
         })
@@ -48,7 +49,7 @@ export const actGetListTodo = () => (dispatch) => {
 export const actGetListTodo = () => (dispatch) => {
     dispatch({
         types: [Types.GET_LIST_TODO_REQUEST, Types.GET_LIST_TODO_SUCCESS, Types.GET_LIST_TODO_FAILURE],
-        callAPI: () => HomeRepository.getAll(),
+        callAPI: () => todoRepository.getAll(),
         callBack: {
             success: response => {console.log('callAPI success', response)},
             failure: error => {console.log('callAPI failure', error)}
@@ -122,13 +123,22 @@ const homeReducer = createReducer(initialState, {
 ### Repository with axios interceptors
 ```js
 export default class BaseRepository {
-    constructor(uri) {
+    uri: string;
+    repository: AxiosInstance;
+
+    constructor(uri: string) {
         this.uri = uri;
         this.repository = this.axiosClient();
-        this.repository.interceptors.response.use(this.handleSuccess, this.handleError)
+        this.repository.interceptors.request.use((config: AxiosRequestConfig): AxiosRequestConfig => {
+            const yourToken = 'your_token';
+            config.headers['Authorization'] = `Bearer ${yourToken}`;
+
+            return config;
+        });
+        this.repository.interceptors.response.use(this.handleSuccess, this.handleError);
     }
 
-    axiosClient(headers = {}) {
+    axiosClient(headers = {}): AxiosInstance {
         const baseURL = process.env.REACT_APP_BASE_URL;
         return axios.create({
             baseURL,
@@ -138,13 +148,13 @@ export default class BaseRepository {
         });
     }
 
-    handleSuccess(response) {
+    handleSuccess(response: AxiosResponse): AxiosResponse {
         return response;
     }
 
-    handleError = (error) => {
-        console.log('axios error:', error);
-        switch (error.response.status) {
+    handleError = (error: AxiosError): any => {
+        console.error('axios error:', error);
+        switch (error?.response?.status) {
             case CONST.HttpStatus.UNAUTHORIZED:
                 break;
             case CONST.HttpStatus.NOT_FOUND:
@@ -152,10 +162,16 @@ export default class BaseRepository {
             default:
                 break;
         }
-        return Promise.reject(error)
+
+        return Promise.reject(error);
     }
 
-    _invalidObject(payload) {
+    setUri(uri: string): BaseRepository {
+        this.uri = uri;
+        return this;
+    }
+
+    _invalidObject(payload = {}): string | null {
         if (!_.isObject(payload)) return 'Payload is invalid';
         if ((payload instanceof FormData) && (_.isNil(payload) || payload.entries().next().done)) {
             return 'Payload is Empty';
@@ -164,86 +180,119 @@ export default class BaseRepository {
         return null;
     }
 
-    getById(id) {
+    getById<T>(id: number): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
-
         return this.repository.get(`${this.uri}/${id}`);
     }
 
-    getOne(id) {
+    getOne<T>(id: number): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
         return this.repository.get(`${this.uri}?id=${id}`);
     }
 
-    getAll() {
-        return this.repository.get(`${this.uri}`);
+    getAll<T>(): Promise<AxiosResponse<T>> {
+        return this.repository.get(this.uri);
     }
 
-    pagination({ pageIndex = 1, limit = 10 }) {
-        let offset = (pageIndex - 1) * limit;
+    /**
+    * @param {object} is a object query
+    * @example {a: 1, b: '2', c: 'string'}
+    * ⟹ a=1&b=2&c=string
+    */
+    query<T>(object: Record<string, any>): Promise<AxiosResponse<T>> {
+        const invalidMessage = this._invalidObject(object);
+        if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.get(`${this.uri}?limit=${limit}&offset=${offset}`);
+        return this.repository.get(`${this.uri}?${qs.stringify(object)}`);
     }
 
-    search(searchText) {
+    pagination<T>({ pageIndex = 0, limit = 10, sortBy = 'createdTime', sortType = 'DESC' }: { pageIndex: number, limit: number, sortBy?: string, sortType?: string }): Promise<AxiosResponse<T>> {
+        return this.repository.get(`${this.uri}?itemsPerPage=${limit}&pageId=${pageIndex}&sortBy=${sortBy}&sortType=${sortType}`);
+    }
+
+    search<T>(searchText: string | number): Promise<AxiosResponse<T>> {
         if (_.isNil(searchText)) return Promise.reject('SearchText is empty');
 
         return this.repository.get(`${this.uri}?search=${searchText}`);
     }
 
-    create(payload = {}) {
-        let invalidMessage = this._invalidObject(payload);
+    create<T>(payload = {}): Promise<AxiosResponse<T>> {
+        const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.post(`${this.uri}`, payload);
+        return this.repository.post(this.uri, payload);
     }
 
-    update(payload = {}) {
-        let invalidMessage = this._invalidObject(payload);
+    update<T>(payload = {}): Promise<AxiosResponse<T>> {
+        const invalidMessage = this._invalidObject(payload);
         if (invalidMessage) return Promise.reject(invalidMessage);
 
-        return this.repository.put(`${this.uri}`, payload);
+        return this.repository.put(this.uri, payload);
     }
 
-    delete(id) {
+    delete<T>(id: number): Promise<AxiosResponse<T>> {
         if (!_.isNumber(id)) return Promise.reject('Id is not a number');
 
         return this.repository.delete(`${this.uri}/${id}`)
+    }
+
+    customConfig<T>(config: AxiosRequestConfig): AxiosPromise<T> {
+        return axios(config);
+    }
+}
+```
+
+### TodoRepository
+```js
+export default class TodoRepository extends BaseRepository {
+    constructor() {
+        super(CONST.ApiURI.TODO);
+    }
+
+    getAllCustom(): Promise<AxiosResponse<Todo>> {
+        return this.setUri(CONST.ApiURI.TODO).getAll<Todo>();
     }
 }
 ```
 ### Factory to initialize instance of repository
 ```js
-import * as CONST from 'src/core/utils/constants';
-import HomeRepository from 'src/core/repositories/Home.repository';
+export enum RepositoryName {
+    TODO = 'todoRepository'
+}
 
-const repositories = {
-    [CONST.RepositoryName.HOME]: new HomeRepository()
+type RepositoryValue = {
+    [RepositoryName.TODO]: TodoRepository
+}
+
+type RepositoryType = {
+    [key in RepositoryName]: RepositoryValue[key];
+}
+
+const Repositories: RepositoryType = {
+    [RepositoryName.TODO]: new TodoRepository()
 };
-
-export default {
-    get: (name) => repositories[name]
-};
-
 ```
 
 > ##### Using
 ```js
-const HomeRepository = Repository.get(CONST.RepositoryName.HOME);
+const todoRepository = Repositories[RepositoryName.TODO];
 ```
 
 ## Available Scripts
 
 In the project directory, you can run:
 
-### `npm run start:dev`
+### `yarn install`
+Install all dependencies
+
+### `yarn start:dev`
 
 Runs the app in the development mode.<br>
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-### `npm run build:dev`
-### `npm run build:production`
+### `yarn build:dev`
+### `yarn build:production`
 
 Builds the app for production to the `build` folder.<br>
 It correctly bundles React in production mode and optimizes the build for the best performance.
